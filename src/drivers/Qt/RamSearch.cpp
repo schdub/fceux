@@ -1534,6 +1534,13 @@ void RamSearchDialog_t::updateRamValues(void)
 		{
 			if ( memLoc[loc->addr].val.v24.u != val.v24.u )
 			{
+				// because we're mapping 24bit values into 32bit variables
+				// we need to concern about sign bit for signed values
+				if ( dpyType == 's' && (val.v24.u & 0x800000) )
+				{
+					val.v24.u &= ~(0x800000); // clear sign bit at 24 bit
+					val.v24.u |=  0x80000000; // set 32 bit as sign
+				}
 				memLoc[loc->addr].val = val;
 				memLoc[loc->addr].chgCount++;
 			}

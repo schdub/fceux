@@ -425,12 +425,22 @@ void RamWatchDialog_t::updateRamWatchDisplay(void)
 		   	if (rw->type == 's')
 		   	{
 		   		sprintf (valStr1, "%i", rw->val.i24);
+		   		// because 24bit values mapped into 32bit variables
+		   		// we need to be careful with sign bit
+		   		int32_t t = rw->val.i24;
+		   		if (t < 0)
+		   		{
+		   			// return back 24bit only for displaying in HEX value
+		   			t &= ~(0x80000000);
+		   			t |=    (0x800000);
+		   		}
+		   		sprintf (valStr2, "0x%06X", t);
 		   	}
 		   	else
 		   	{
 		   		sprintf (valStr1, "%u", rw->val.u24);
+		   		sprintf (valStr2, "0x%06X", rw->val.u24);
 		   	}
-		   	sprintf (valStr2, "0x%06X", rw->val.u24);
 		   }
 		   else if (rw->size == 2)
 		   {
@@ -747,6 +757,13 @@ void ramWatch_t::updateMem (void)
 		val.u24  = GetMem (addr + 2);
 		val.u24 |= GetMem (addr + 1) << 8;
 		val.u24 |= GetMem (addr    ) << 16;
+		// because 24bit values mapped into 32bit variables
+		// we need to take care of sign bit for signed values
+		if ( type == 's' && (val.u24 & 0x800000) )
+		{
+			val.u24 &= ~(0x800000); // clear sign bit at 24 bit
+			val.u24 |=  0x80000000; // set 32 bit as sign
+		}
 	}
 	else if (size == 4)
 	{
